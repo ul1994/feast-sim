@@ -70,7 +70,7 @@ main <- function(unk=1, iters=5) {
 		}
 		gamma[1:kk,] <- temp_gamma[1:kk,]
 
-		for (ii in 1:kk+1) {
+		for (ii in 1:(kk+1)) {
 			ai <- alpha_i(ii, C, alpha, gamma, xmat)
 			temp_alpha[ii] <- ai
 		}
@@ -88,6 +88,8 @@ main <- function(unk=1, iters=5) {
 	print(sum(abs(alpha_true-alpha)))
 	print('Non-unk error:')
 	print(sum(abs(alpha_true[1:kk]-alpha[1:kk])))
+
+	return(list(alpha, gamma, sources, sink))
 }
 
-main(iters=1000)
+result <- main(iters=1000)
