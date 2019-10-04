@@ -43,13 +43,13 @@ main <- function(unk=1, iters=5) {
 	C <- sum(xmat)
 
 	alpha <- rep(1/(kk+1), kk+1)
-	gamma <- ymat / colSums(ymat)
+	gamma <- ymat / rowSums(ymat)
 
 	# augment gamma with a unknown source
 	unkrow <- rep(1/nn, nn)
 	gamma <- rbind(gamma, unkrow)
 	# recalc proportional amounts
-	gamma <- gamma / colSums(gamma)
+	gamma <- gamma / rowSums(gamma)
 
 	temp_gamma <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
 	temp_alpha <- rep(0, length(alpha))

@@ -2,8 +2,7 @@
 library(stats)
 library(actuar)
 
-generate <- function(kk, nn,
-	unk_mix=1, unk_ratio=0.25, unk=1) {
+generate <- function(kk, nn, unk=1) {
 
 	print(paste('N taxa (= size of sink):', nn))
 	print(paste('K sources:', kk))
@@ -23,7 +22,7 @@ generate <- function(kk, nn,
 	# mixture is characterized by few concentrations (pareto)
 	alpha_true <- rpareto(kk+unk, 3, 1)
 	# manually set augment ratio
-	alpha_true[kk+1] <- sum(alpha_true[1:kk])/(1-unk_ratio)*unk_ratio
+	# alpha_true[kk+1] <- sum(alpha_true[1:kk])/(1-unk_ratio)*unk_ratio
 	alpha_true <- alpha_true / sum(alpha_true)
 
 	sink <- data.frame(
@@ -50,5 +49,4 @@ generate <- function(kk, nn,
 }
 
 blob <- generate(
-	8, 64,
-	unk_ratio=0.25)
+	8, 16)
