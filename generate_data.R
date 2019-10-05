@@ -48,4 +48,4 @@ generate <- function(kk, nn, unk=1) {
 	return(list(sources, alpha_true, sink))
 }
 
-blob <- generate(8, 16)
+blob <- generate(8, 128)

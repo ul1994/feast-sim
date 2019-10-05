@@ -1,4 +1,25 @@
 
+qval <- function(xx, yy, alpha, gamma) {
+	sum1 <- 0
+	sum2 <- 0
+
+	for (yi in nrow(gamma)) {
+		for (xj in ncol(gamma)) {
+			val <- xx[xj]*pij(yi, xj, alpha, gamma)*log(alpha[yi]*gamma[yi, xj])
+			sum1 <- sum1 + val
+		}
+	}
+
+	for (yi in nrow(gamma)-1) { # FIXME: make num-unknowns changeable
+		for (xj in ncol(gamma)) {
+			val <- yy[yi, xj]*log(gamma[yi, xj])
+			sum2 <- sum2 + val
+		}
+	}
+
+	return(sum1 + sum2)
+}
+
 pij <- function(ii, jj, alpha, gamma) {
 	num <- alpha[ii] * gamma[ii, jj]
 	denom <- alpha %*% gamma[,jj]
@@ -55,9 +76,11 @@ main <- function(unk=1, iters=5) {
 	temp_alpha <- rep(0, length(alpha))
 
 	print('Unknown init as:')
-	print(unkrow)
+	# print(unkrow)
 	print('Initial error:')
 	print(sum(abs(alpha_true-alpha)))
+
+	qhist <- rep(0, iters)
 
 	# do em
 	for (it in 1:iters) {
@@ -76,6 +99,8 @@ main <- function(unk=1, iters=5) {
 		}
 		alpha <- temp_alpha
 
+		qhist[it] <- qval(xmat, ymat, alpha, gamma)
+
 		if (it %% 100 == 0) {
 			print(paste(it, '/', iters))
 		}
@@ -88,7 +113,7 @@ main <- function(unk=1, iters=5) {
 	print(sum(abs(alpha_true-alpha)))
 	print('Non-unk error:')
 	print(sum(abs(alpha_true[1:kk]-alpha[1:kk])))
-
+	plot(c(1:iters), qhist, 'l')
 	return(list(alpha, gamma, sources, sink))
 }
 
