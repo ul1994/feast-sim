@@ -27,11 +27,13 @@ pij <- function(ii, jj, alpha, gamma) {
 }
 
 gamma_ij <- function(ii, jj, alpha, gamma, xx, yy) {
-	num <- xx[jj]*pij(ii, jj, alpha, gamma) + yy[ii,jj]
+	yij <- if (ii > nrow(yy)) 0 else yy[ii, jj]
+	num <- xx[jj]*pij(ii, jj, alpha, gamma) + yij
 	xsum <- 0
 	for (xj in 1:ncol(xx)) {
+		yij <- if (ii > nrow(yy)) 0 else yy[ii, xj]
 		# FIXME: is the +y inside or outside the sum?
-		xsum <- xsum + xx[xj]*pij(ii, xj, alpha, gamma) + yy[ii, xj]
+		xsum <- xsum + xx[xj]*pij(ii, xj, alpha, gamma) + yij
 	}
 	return(num/xsum)
 }
@@ -65,6 +67,7 @@ main <- function(unk=1, iters=5) {
 
 	alpha <- rep(1/(kk+1), kk+1)
 	gamma <- ymat / rowSums(ymat)
+	beta <- xmat / sum(xmat)
 
 	# augment gamma with a unknown source
 	unkrow <- rep(1/nn, nn)
@@ -74,6 +77,7 @@ main <- function(unk=1, iters=5) {
 
 	temp_gamma <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
 	temp_alpha <- rep(0, length(alpha))
+	pijmat <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
 
 	print('Unknown init as:')
 	# print(unkrow)
@@ -85,13 +89,18 @@ main <- function(unk=1, iters=5) {
 	# do em
 	for (it in 1:iters) {
 
-		for (ii in 1:kk) {
+		for (ii in 1:(kk+1)) {
 			for (jj in 1:nn) {
 				gij <- gamma_ij(ii, jj, alpha, gamma, xmat, ymat)
 				temp_gamma[ii, jj] = gij
 			}
 		}
+
 		gamma[1:kk,] <- temp_gamma[1:kk,]
+		bhat <- alpha %*% gamma
+		resid <- bhat - beta
+		gamma_resid <- resid / alpha[kk+1]
+		gamma[kk+1,] <- gamma[kk+1,] - gamma_resid
 
 		for (ii in 1:(kk+1)) {
 			ai <- alpha_i(ii, C, alpha, gamma, xmat)
@@ -100,6 +109,11 @@ main <- function(unk=1, iters=5) {
 		alpha <- temp_alpha
 
 		qhist[it] <- qval(xmat, ymat, alpha, gamma)
+		if (it > 1 && qhist[it-1] > qhist[it]) {
+			print(paste(it, 'Q decreased'))
+			print(paste(qhist[it-1], '->', qhist[it]))
+			break
+		}
 
 		if (it %% 100 == 0) {
 			print(paste(it, '/', iters))
@@ -117,4 +131,4 @@ main <- function(unk=1, iters=5) {
 	return(list(alpha, gamma, sources, sink))
 }
 
-result <- main(iters=1000)
+result <- main(iters=500)
