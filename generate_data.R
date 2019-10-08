@@ -25,13 +25,13 @@ generate <- function(kk, nn, unk=1) {
 	# alpha_true[kk+1] <- sum(alpha_true[1:kk])/(1-unk_ratio)*unk_ratio
 	alpha_true <- alpha_true / sum(alpha_true)
 
-	# sink <- data.frame(
-	# 	matrix(
-	# 		vector(), 1, nn,
-	# 		dimnames=list(c(), sapply(1:nn, function(tnum) paste('T', tnum, sep="")))),
-	# 	stringsAsFactors=F)
+	sink <- data.frame(
+		matrix(
+			vector(), 1, nn,
+			dimnames=list(c(), sapply(1:nn, function(tnum) paste('T', tnum, sep="")))),
+		stringsAsFactors=F)
 	sink <- rep(0, nn)
-	sink <- data.frame(sink=sink)
+	# sink <- data.frame(sink=sink)
 
 	for (val in 1:(kk+1)) {
 		# simulate the sink

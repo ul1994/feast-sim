@@ -90,22 +90,13 @@ main <- function(unk=1, iters=5, converged=10e-6) {
 	qhist <- rep(0, iters)
 
 	# do em
-	while (it < iters) {
+	it <- 1
+	while (it <= iters) {
 		for (ii in 1:(kk+1)) {
 			for (jj in 1:nn) {
 				pijmat[ii, jj] <- pij(ii, jj, alpha, gamma)
 			}
 		}
-		# if (it == 1)
-		# 	print(paste('Qstart:', qval(xmat, ymat, pijmat, alpha, gamma)))
-
-		print(paste('Before', qval(xmat, ymat, pijmat, alpha, gamma)))
-
-		for (ii in 1:(kk+1)) {
-			ai <- alpha_i(ii, C, pijmat, alpha, gamma, xmat)
-			temp_alpha[ii] <- ai
-		}
-		alpha <- temp_alpha
 
 		for (ii in 1:(kk+1)) {
 			for (jj in 1:nn) {
@@ -113,32 +104,20 @@ main <- function(unk=1, iters=5, converged=10e-6) {
 				temp_gamma[ii, jj] = gij
 			}
 		}
-		# gamma <- temp_gamma
-		gamma[1:kk,] <- temp_gamma[1:kk,]
-		# resid_0 <- (alpha %*% gamma) - beta
-		# gamma_resid <- resid_0 / alpha[kk+1]
-		# gamma[kk+1,] <- gamma[kk+1,] - gamma_resid
-
-		# print(paste('After', qval(xmat, ymat, pijmat, alpha, gamma)))
+		for (ii in 1:(kk+1)) {
+			ai <- alpha_i(ii, C, pijmat, alpha, gamma, xmat)
+			temp_alpha[ii] <- ai
+		}
+		alpha <- temp_alpha
+		gamma <- temp_gamma
 
 		qhist[it] <- qval(xmat, ymat, pijmat, alpha, gamma)
-		# print(paste(it, qhist[it]))
-		if (it > 1 && qhist[it-1] <= qhist[it]) {
-			if (abs(qhist[it] - qhist[it-1]) < converged) {
-				print('Converged')
-				break
-			}
+		if (it > 1 && (qhist[it] - qhist[it-1]) > 0) {
+			print(paste(it, qhist[it] - qhist[it-1]))
 		}
-		if (it > 1 && qhist[it-1] > qhist[it]) {
-			print(paste(it, 'Q decreased'))
-			print(paste(qhist[it-1], '->', qhist[it]))
-			break
-		}
-
 		if (it %% 100 == 0) {
 			print(paste(it, '/', iters))
 		}
-
 		it <- it + 1
 	}
 
