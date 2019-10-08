@@ -45,7 +45,6 @@ generate <- function(kk, nn, unk=1) {
 	save(alpha_true, file="alpha_true.Rda")
 	save(sink, file="sink.Rda")
 
-
 	return(list(sources, alpha_true, sink))
 }
 

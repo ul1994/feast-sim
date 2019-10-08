@@ -27,13 +27,10 @@ pij <- function(ii, jj, alpha, gamma) {
 }
 
 gamma_ij <- function(ii, jj, pijmat, alpha, gamma, xx, yy) {
-	yij <- if (ii > nrow(yy)) 0 else yy[ii, jj]
-	num <- xx[jj]*pijmat[ii, jj] + yij
+	num <- xx[jj]*pijmat[ii, jj] + yy[ii, jj]
 	xsum <- 0
 	for (xj in 1:ncol(xx)) {
-		yij <- if (ii > nrow(yy)) 0 else yy[ii, xj]
-		# FIXME: is the +y inside or outside the sum?
-		xsum <- xsum + xx[xj]*pijmat[ii, xj] + yij
+		xsum <- xsum + xx[xj]*pijmat[ii, xj] + yy[ii, xj]
 	}
 	return(num/xsum)
 }
@@ -42,9 +39,6 @@ alpha_i <- function(ii, C, pijmat, alpha, gamma, xx) {
 	xsum <- 0
 	for (xj in 1:ncol(xx)) {
 		frac <- xx[xj]/C
-		# num <- alpha[ii]*gamma[ii, xj]
-		# denom <- alpha %*% gamma[, xj]
-
 		elem <- frac * pijmat[ii, xj]
 		xsum <- xsum + elem
 	}
@@ -74,6 +68,10 @@ main <- function(unk=1, iters=5, converged=10e-6) {
 	gamma <- rbind(gamma, unkrow)
 	# recalc proportional amounts
 	gamma <- gamma / rowSums(gamma)
+
+	# augment y with an empty row
+	emptyrow <- rep(0, nn)
+	ymat <- rbind(ymat, emptyrow)
 	# # aug last row w/ resids
 	# resid <- (alpha %*% gamma) - beta
 	# gamma_resid <- resid / alpha[kk+1]
