@@ -1,48 +1,42 @@
 
-qval <- function(xx, yy, pijmat, alpha, gamma) {
-	sum1 <- 0
-	sum2 <- 0
-
-	for (yi in nrow(gamma)) {
-		for (xj in ncol(gamma)) {
-			val <- xx[xj]*pijmat[yi, xj]*log(alpha[yi]*gamma[yi, xj])
-			sum1 <- sum1 + val
+qval <- function(xx, yy, pij, alpha, gamma) {
+	xterm <- 0
+	yterm <- 0
+	for (ii in 1:nrow(gamma)) {
+		for (jj in 1:ncol(gamma)) {
+			term <- xx[jj]*pij[ii, jj]*log(alpha[ii]*gamma[ii, jj])
+			xterm <- xterm + term
 		}
 	}
 
-	for (yi in nrow(gamma)-1) { # FIXME: make num-unknowns changeable
-		for (xj in ncol(gamma)) {
-			val <- yy[yi, xj]*log(gamma[yi, xj])
-			sum2 <- sum2 + val
-		}
+	for (ii in 1:(nrow(gamma)-1)) {
+		term <- yy[ii,] %*% log(gamma[ii,])
+		yterm <- yterm + term
 	}
 
-	return(sum1 + sum2)
+	return(xterm + yterm)
 }
 
-pij <- function(ii, jj, alpha, gamma) {
-	num <- alpha[ii] * gamma[ii, jj]
-	denom <- alpha %*% gamma[,jj]
+pijmat <- function(alpha, gamma) {
+	pij <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
+	for (ii in 1:nrow(gamma)) {
+		for (jj in 1:ncol(gamma)) {
+			val <- alpha[ii]*gamma[ii, jj] / (alpha %*% gamma[, jj])
+			pij[ii, jj] <- val
+		}
+	}
+	return(pij)
+}
+
+gamma_ij <- function(ii, jj, pij, alpha, gamma, xx, yy) {
+	num <- xx[jj]*pij[ii, jj] + yy[ii, jj]
+	denom <- t(xx) %*% pij[ii,] + sum(yy[ii,])
 	return(num/denom)
 }
 
-gamma_ij <- function(ii, jj, pijmat, alpha, gamma, xx, yy) {
-	num <- xx[jj]*pijmat[ii, jj] + yy[ii, jj]
-	xsum <- 0
-	for (xj in 1:ncol(xx)) {
-		xsum <- xsum + xx[xj]*pijmat[ii, xj] + yy[ii, xj]
-	}
-	return(num/xsum)
-}
-
-alpha_i <- function(ii, C, pijmat, alpha, gamma, xx) {
-	xsum <- 0
-	for (xj in 1:ncol(xx)) {
-		frac <- xx[xj]/C
-		elem <- frac * pijmat[ii, xj]
-		xsum <- xsum + elem
-	}
-	return(xsum)
+alpha_i <- function(ii, C, pij, gamma, xx) {
+	asum <- 1/C * (t(xx) %*% pij[ii,])
+	return(asum)
 }
 
 main <- function(unk=1, iters=5, converged=10e-6) {
@@ -69,65 +63,57 @@ main <- function(unk=1, iters=5, converged=10e-6) {
 	# recalc proportional amounts
 	gamma <- gamma / rowSums(gamma)
 
-	# augment y with an empty row
+	# augment ymat with an empty row for ease of computation
 	emptyrow <- rep(0, nn)
 	ymat <- rbind(ymat, emptyrow)
-	# # aug last row w/ resids
-	# resid <- (alpha %*% gamma) - beta
-	# gamma_resid <- resid / alpha[kk+1]
-	# gamma[kk+1,] <- gamma[kk+1,] - gamma_resid
 
 	temp_gamma <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
 	temp_alpha <- rep(0, length(alpha))
-	pijmat <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
-
-	print('Unknown init as:')
-	print('Initial error:')
-	print(sum(abs(alpha_true-alpha)))
 
 	qhist <- rep(0, iters)
-
-	# do em
 	it <- 1
-	while (it <= iters) {
-		for (ii in 1:(kk+1)) {
-			for (jj in 1:nn) {
-				pijmat[ii, jj] <- pij(ii, jj, alpha, gamma)
-			}
-		}
+	print('Unknown init as:')
+	print('Initial Qval:')
+	pij <- pijmat(alpha, gamma)
+	print(qval(xmat, ymat, pij, alpha, gamma))
 
-		for (ii in 1:(kk+1)) {
-			for (jj in 1:nn) {
-				gij <- gamma_ij(ii, jj, pijmat, alpha, gamma, xmat, ymat)
-				temp_gamma[ii, jj] = gij
+	while(it <= iters) {
+		pij <- pijmat(alpha, gamma)
+
+		for (ii in 1:nrow(gamma)) {
+			for (jj in 1:ncol(gamma)) {
+				temp_gamma[ii, jj] <- gamma_ij(ii, jj, pij, alpha, gamma, xmat, ymat)
 			}
 		}
-		for (ii in 1:(kk+1)) {
-			ai <- alpha_i(ii, C, pijmat, alpha, gamma, xmat)
-			temp_alpha[ii] <- ai
+		for (ii in 1:length(alpha)) {
+			temp_alpha[ii] <- alpha_i(ii, C, pij, gamma, xmat)
 		}
-		alpha <- temp_alpha
 		gamma <- temp_gamma
+		alpha <- temp_alpha
 
-		qhist[it] <- qval(xmat, ymat, pijmat, alpha, gamma)
-		if (it > 1 && (qhist[it] - qhist[it-1]) > 0) {
-			print(paste(it, qhist[it] - qhist[it-1]))
+		qnow <- qval(xmat, ymat, pij, alpha, gamma)
+		qhist[it] <- qnow
+		if (iters > 50 && it %% 100 == 0) {
+			print(paste(it, 'Q:', qnow))
 		}
-		if (it %% 100 == 0) {
-			print(paste(it, '/', iters))
+		if (iters <= 50) {
+			print(paste(it, 'Q:', qnow))
 		}
 		it <- it + 1
 	}
 
-	res <- data.frame(true=alpha_true, feast=alpha, err=abs(alpha_true-alpha))
 
-	print(res)
-	print('Total error:')
-	print(sum(abs(alpha_true-alpha)))
-	print('Non-unk error:')
-	print(sum(abs(alpha_true[1:kk]-alpha[1:kk])))
-	plot(c(1:it), qhist[1:it], 'l')
+	if (iters > 50) {
+		res <- data.frame(true=alpha_true, feast=alpha, err=abs(alpha_true-alpha))
+		print(res)
+		print('Total error:')
+		print(sum(abs(alpha_true-alpha)))
+		print('Non-unk error:')
+		print(sum(abs(alpha_true[1:kk]-alpha[1:kk])))
+		plot(c(1:it), qhist[1:it], 'l')
+	}
+
 	return(list(alpha, gamma, sources, sink))
 }
 
-result <- main(iters=1000, converged=10e-6)
+result <- main(iters=100, converged=10e-6)
