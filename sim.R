@@ -26,6 +26,16 @@ noisy_sources <- function(counts) {
 	return(noisy)
 }
 
+mix_sink <- function(alpha, sources) {
+	sink <- rep(0, ncol(sources))
+
+	for (kk in 1:nrow(sources)) {
+		sink <- sink + alpha[kk] * sources[kk, ]
+	}
+
+	return(sink)
+}
+
 generate_alphas <- function(batch, numK, unk=1) {
 	amat <- matrix(, nrow=batch, ncol=numK+unk)
 	for (ii in 1:batch) {
@@ -42,10 +52,9 @@ generate_data <- function(numK=20, numAlpha=30) {
 	raw_sources<- collect_sources(data, numK)
 	for (test_i in 1:numAlpha) {
 		noisy <- noisy_sources(raw_sources)
-		saveRDS(noisy, file=sprintf('saved/data%s.Rda', test_i))
+		saveRDS(noisy, file=sprintf('saved/sources%s.Rda', test_i))
+
+		saveRDS(mix_sink(alphamat[test_i,], noisy),
+			file=sprintf('saved/sink%s.Rda', test_i))
 	}
-}
-
-run <- function() {
-
 }

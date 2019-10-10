@@ -114,3 +114,63 @@ main <- function(unk=1, iters=5, converged=10e-6) {
 
 	return(list(alpha, gamma, sources, sink))
 }
+
+em <- function(sink, sources, unk=1, iters=1000, converged=10e-6) {
+	# prep data
+	kk <- nrow(sources)-unk
+	nn <- ncol(sources)
+	ymat <- as.matrix(sources)[1:kk,]
+	xmat <- as.matrix(sink)
+	C <- sum(xmat)
+
+	alpha <- rep(1/(kk+1), kk+1)
+	gamma <- ymat / rowSums(ymat)
+	beta <- xmat / sum(xmat)
+
+	# augment gamma with a unknown source
+	unkrow <- rep(1/nn, nn)
+	gamma <- rbind(gamma, unkrow)
+	# recalc proportional amounts
+	gamma <- gamma / rowSums(gamma)
+
+	# augment ymat with an empty row for ease of computation
+	emptyrow <- rep(0, nn)
+	ymat <- rbind(ymat, emptyrow)
+
+	temp_gamma <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
+	temp_alpha <- rep(0, length(alpha))
+
+	qhist <- rep(0, iters)
+	it <- 1
+	print('Unknown init as:')
+	print('Initial Qval:')
+	pij <- pijmat(alpha, gamma)
+	print(qval(xmat, ymat, pij, alpha, gamma))
+
+	while(it <= iters) {
+		pij <- pijmat(alpha, gamma)
+
+		for (ii in 1:nrow(gamma)) {
+			for (jj in 1:ncol(gamma)) {
+				temp_gamma[ii, jj] <- gamma_ij(ii, jj, pij, alpha, gamma, xmat, ymat)
+			}
+		}
+		for (ii in 1:length(alpha)) {
+			temp_alpha[ii] <- alpha_i(ii, C, pij, gamma, xmat)
+		}
+		gamma <- temp_gamma
+		alpha <- temp_alpha
+
+		qnow <- qval(xmat, ymat, pij, alpha, gamma)
+		qhist[it] <- qnow
+		if (iters > 50 && it %% 100 == 0) {
+			print(paste(it, 'Q:', qnow))
+		}
+		if (iters <= 50) {
+			print(paste(it, 'Q:', qnow))
+		}
+		it <- it + 1
+	}
+
+	return(list(alpha, gamma, qhist))
+}
