@@ -102,7 +102,6 @@ main <- function(unk=1, iters=5, converged=10e-6) {
 		it <- it + 1
 	}
 
-
 	if (iters > 50) {
 		res <- data.frame(true=alpha_true, feast=alpha, err=abs(alpha_true-alpha))
 		print(res)
@@ -116,4 +115,4 @@ main <- function(unk=1, iters=5, converged=10e-6) {
 	return(list(alpha, gamma, sources, sink))
 }
 
-result <- main(iters=100, converged=10e-6)
+result <- main(iters=1000, converged=10e-6)
