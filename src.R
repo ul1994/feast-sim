@@ -114,5 +114,3 @@ main <- function(unk=1, iters=5, converged=10e-6) {
 
 	return(list(alpha, gamma, sources, sink))
 }
-
-result <- main(iters=1000, converged=10e-6)
