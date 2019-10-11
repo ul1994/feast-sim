@@ -2,13 +2,14 @@
 source('./sim.R')
 source('./src.R')
 
-# generate_data()
+generate_data()
 
 unk = 1
 print(paste('Init with unknowns:', unk))
 
 alphas <- readRDS(file="saved/alphas.Rda")
 
+results <- c()
 for (ai in 1:nrow(alphas)) {
 	# test loop
 
@@ -18,6 +19,6 @@ for (ai in 1:nrow(alphas)) {
 
 	sources[sources == 0] = 1
 	sink[sink == 0] = 1
-	results <- em(sink, sources)
+	results <- em(sink, sources, iters=100)
 	break
 }

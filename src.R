@@ -163,12 +163,13 @@ em <- function(sink, sources, unk=1, iters=1000, converged=10e-6) {
 
 		qnow <- qval(xmat, ymat, pij, alpha, gamma)
 		qhist[it] <- qnow
-		if (iters > 50 && it %% 100 == 0) {
+		print(paste(it, qnow))
+		if (it %% 10 == 0) {
 			print(paste(it, 'Q:', qnow))
 		}
-		if (iters <= 50) {
-			print(paste(it, 'Q:', qnow))
-		}
+		# if (iters <= 50) {
+		# 	print(paste(it, 'Q:', qnow))
+		# }
 		it <- it + 1
 	}
 
