@@ -2,3 +2,6 @@
 .Rproj.user
 saved
 .Rhistory
+*.sh
+*.rda
+
