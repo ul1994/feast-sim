@@ -1,6 +1,8 @@
 
+library('stats')
 source('./sim.R')
 source('./src.R')
+source('./metrics.R')
 
 # generate_data()
 
@@ -19,9 +21,7 @@ for (ai in 1:nrow(alphas)) {
 	sources <- readRDS(file=sprintf('saved/sources%s.Rda', ai))
 	sink <- readRDS(file=sprintf('saved/sink%s.Rda', ai))
 
-	sources[sources == 0] = 1
-	sink[sink == 0] = 1
-	results <- em(sink, sources, iters=1000)
+	results <- em(sink, sources, iters=100, alpha_true=alpha_true)
 
 	print(proc.time() - ptm)
 

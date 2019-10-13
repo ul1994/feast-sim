@@ -1,4 +1,8 @@
 
 source('./src.r')
 
-result <- main(iters=1000, converged=10e-6)
+load(file="alpha_true.Rda")
+load(file='sources.Rda')
+load(file='sink.Rda')
+
+result <- em(sink, sources, iters=1000)
