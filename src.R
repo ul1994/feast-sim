@@ -90,17 +90,20 @@ em <- function(sink, sources, unk=1, iters=1000,
 			temp_alpha[ii] <- alpha_i(ii, C, pij, gamma, xmat)
 		}
 		gamma <- temp_gamma
+		ad <- sum(abs(alpha - temp_alpha))
 		alpha <- temp_alpha
 
 		qnow <- qval(xmat, ymat, pij, alpha, gamma)
 		qhist[it] <- qnow
 		qd <- 0
 		if (it > 1) qd <- qhist[it] - qhist[it-1]
-		print(sprintf(
-			'%d Q:%.2f qd:%.2f',
-			it, qnow, qd))
 
+		print(sprintf(
+			'%d Q:%.2f qd:%.2f ad:%.5f',
+			it, qnow, qd, ad))
 		it <- it + 1
+
+		if (ad <= converged) break
 	}
 
 	return(list(alpha, gamma, qhist))
