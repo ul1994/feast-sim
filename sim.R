@@ -2,16 +2,37 @@
 library(stats)
 library(actuar)
 
-collect_sources <- function(data, numK=20, limitN=-1, unk=1) {
+collect_sources <- function(data, numK=20, unk=1) {
 	numtot <- numK + unk
 	inds <- sample(1:nrow(data), numtot, replace=F)
-	colsize = if (limitN != -1) limitN else ncol(data)
-	sources <- matrix(, nrow=numtot, ncol=colsize)
+	sources <- matrix(, nrow=numtot, ncol=ncol(data))
 	it <- 1
 	for (ii in inds) {
-		vector <- data[ii, 1:colsize]
+		vector <- data[ii, ]
 		vector[is.na(vector)] <- 0
 		sources[it,] <- vector
+		it <- it + 1
+	}
+	return(sources)
+}
+
+collect_sources_small <- function(data, numK=20, limitN=1000, unk=1) {
+	numtot <- numK + unk
+
+	inds <- sample(1:nrow(data), 1000, replace=F)
+	colsize = if (limitN != -1) limitN else ncol(data)
+	sources <- matrix(, nrow=numtot, ncol=colsize)
+
+	it <- 1
+	for (ii in inds) {
+		if (it == numtot+1)
+			break
+
+		vector <- data[ii, 1:colsize]
+		vector[is.na(vector)] <- 0
+		if (sum(vector) == 0) next
+		sources[it,] <- vector
+
 		it <- it + 1
 	}
 	return(sources)
@@ -48,14 +69,17 @@ generate_alphas <- function(batch, numK, unk=1) {
 	return(amat)
 }
 
-generate_data <- function(numK=20, numAlpha=30, limitN=-1) {
+generate_data <- function(numK=20, numAlpha=30, tiny=F) {
 	alphamat <- generate_alphas(numAlpha, numK)
 	saveRDS(alphamat, file='saved/alphas.Rda')
 
 	data <- readRDS('liat.rds')
 
 	for (test_i in 1:numAlpha) {
-		raw_sources<- collect_sources(data, numK, limitN=limitN)
+		raw_sources<- collect_sources(data, numK)
+		if (tiny) {
+			raw_sources<- collect_sources_small(data, numK)
+		}
 		noisy <- noisy_sources(raw_sources)
 		saveRDS(noisy, file=sprintf('saved/sources%s.Rda', test_i))
 
