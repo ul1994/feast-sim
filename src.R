@@ -1,30 +1,37 @@
 
-qval <- function(xx, yy, pij, alpha, gamma) {
+qval <- function(xx, yy, pij, alpha, gamma, clip_zero=10e-6) {
 	xterm <- 0
 	yterm <- 0
 	for (ii in 1:nrow(gamma)) {
 		for (jj in 1:ncol(gamma)) {
-			term <- xx[jj]*pij[ii, jj]*log(alpha[ii]*gamma[ii, jj])
+			logarg <- alpha[ii]*gamma[ii, jj]
+			if (logarg < clip_zero) logarg <- clip_zero
+
+			term <- xx[jj]*pij[ii, jj]*log(logarg)
 			xterm <- xterm + term
 			# if (is.nan(term)) print(paste(ii, jj, gamma[ii, jj]))
 		}
 	}
 
 	for (ii in 1:(nrow(gamma)-1)) {
+		logarg <- gamma[ii,]
+		logarg[logarg < clip_zero] <- clip_zero
+
 		term <- yy[ii,] %*% log(gamma[ii,])
-		if (is.nan(term)) term <- 0
 		yterm <- yterm + term
 	}
 
 	return(xterm + yterm)
 }
 
-pijmat <- function(alpha, gamma, clip_zero=10e-6) {
+pijmat <- function(alpha, gamma) {
 	pij <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
 	for (ii in 1:nrow(gamma)) {
 		for (jj in 1:ncol(gamma)) {
-			val <- alpha[ii]*gamma[ii, jj] / (alpha %*% gamma[, jj])
-			if (is.nan(val)) val <- clip_zero
+			num <- alpha[ii]*gamma[ii, jj]
+			if (num == 0) val <- 0
+			else
+				val <- num / (alpha %*% gamma[, jj])
 			pij[ii, jj] <- val
 		}
 	}
@@ -49,10 +56,11 @@ em <- function(
 	clip_zero=10e-6,
 	alpha_true=F) {
 
-	# ai <- 1
-	# unk=1
-	# iters=1000
-	# converged=10e-6
+	unk <- 0
+	iters <- 200
+	converged <- 10e-6
+	clip_zero <- 10e-6
+	# alpha_true <- F
 
 	# prep data
 	kk <- nrow(sources)-unk
@@ -109,17 +117,19 @@ em <- function(
 		qhist[it] <- qnow
 		qd <- 0
 		if (it > 1) qd <- qhist[it] - qhist[it-1]
-		r2 <- 0
-		if (alpha_true != F)
-			r2 <- (cor(alpha, alpha_true))^2
 
-		if (iters > 10) {
-			if (it %% (iters/10) == 0) {
-				print(sprintf(
-					'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.2f',
-					it, qnow, qd, ad, r2))
-			}
-		}
+		r2 <- (cor(alpha, alpha_true))^2
+
+		# if (iters > 10) {
+		# 	if (it %% (iters/10) == 0) {
+		# 		print(sprintf(
+		# 			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.2f',
+		# 			it, qnow, qd, ad, r2))
+		# 	}
+		# }
+		print(sprintf(
+			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.2f',
+			it, qnow, qd, ad, r2))
 		it <- it + 1
 
 		if (ad <= converged) break

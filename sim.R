@@ -54,7 +54,8 @@ mix_sink <- function(alpha, sources) {
 	sink <- rep(0, ncol(sources))
 
 	for (kk in 1:nrow(sources)) {
-		sink <- sink + alpha[kk] * sources[kk, ]
+		vector <- sources[kk, ]
+		sink <- sink + alpha[kk] * vector
 	}
 
 	return(sink)

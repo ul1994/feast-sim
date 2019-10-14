@@ -17,8 +17,8 @@ alpha_true <- readRDS(file=sprintf("saved/jsd/%s/alphas_%s", run_jsd, tag))[1,]
 
 sources <- readRDS(file=sprintf('saved/jsd/%s/sources_%s', run_jsd, tag))
 sink <- readRDS(file=sprintf('saved/jsd/%s/sink_%s', run_jsd, tag))
-
-print(jsdavg(sources))
+# print(jsdavg(sources))
+# sources[sources == 0] <- 1
 
 results <- em(
 	sink, sources,
