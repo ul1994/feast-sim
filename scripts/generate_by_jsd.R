@@ -1,4 +1,5 @@
 
+
 # Run first:
 #  find_jsd_pairs.R
 #  group_by_jsd.R
@@ -6,7 +7,7 @@
 source('metrics.R')
 source('sim.R')
 
-run_jsd <- '0750'
+run_jsd <- '0250'
 
 source_files <- Sys.glob(sprintf("saved/jsd/%s/sources_*.rds", run_jsd))
 for (fl in source_files) {

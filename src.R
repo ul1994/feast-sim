@@ -1,5 +1,5 @@
 
-qval <- function(xx, yy, pij, alpha, gamma, clip_zero=10e-6) {
+qval <- function(xx, yy, pij, alpha, gamma, clip_zero=10e-12) {
 	xterm <- 0
 	yterm <- 0
 	for (ii in 1:nrow(gamma)) {
@@ -53,14 +53,17 @@ alpha_i <- function(ii, C, pij, gamma, xx) {
 em <- function(
 	sink, sources, unk=1, iters=1000,
 	converged=10e-6,
-	clip_zero=10e-6,
+	clip_zero=10e-12,
 	alpha_true=F) {
 
-	unk <- 0
-	iters <- 200
-	converged <- 10e-6
-	clip_zero <- 10e-6
-	# alpha_true <- F
+	# sources <- sources[1:2,]
+	# alpha_true <- c(0.25, 0.75)
+	# sink <- t(sources) %*% alpha_true
+
+	# unk <- 0
+	# iters <- 50
+	# converged <- 10e-6
+	# clip_zero <- 10e-12
 
 	# prep data
 	kk <- nrow(sources)-unk
@@ -72,24 +75,26 @@ em <- function(
 	alpha <- rep(1/(kk+unk), kk+unk)
 	beta <- xmat / sum(xmat)
 
-	gamma <- ymat / rowSums(ymat)
-	gamma[gamma < clip_zero] <- clip_zero
+	# gamma <- ymat / rowSums(ymat)
+	# gamma[gamma < clip_zero] <- clip_zero
+	gamma <- matrix(, nrow=nrow(ymat), ncol=ncol(ymat))
+	for (row in 1:nrow(ymat)) gamma[row,] <- runif(ncol(ymat), min = 0, max = 1)
 	gamma <- gamma / rowSums(gamma) # allocate some prob to zero entries
 
 	if (unk > 0) {
 		unkrow <- rep(1/nn, nn) # augment gamma with a unknown source
 		gamma <- rbind(gamma, unkrow) # recalc proportional amounts
 		gamma <- gamma / rowSums(gamma) # FIXME: use Liat's method
-	}
 
-	# augment ymat with an empty row for ease of computation
-	emptyrow <- rep(0, nn)
-	ymat <- rbind(ymat, emptyrow)
+		# augment ymat with an empty row for ease of computation
+		emptyrow <- rep(0, nn)
+		ymat <- rbind(ymat, emptyrow)
+	}
 
 	temp_gamma <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
 	temp_alpha <- rep(0, length(alpha))
 
-	qhist <- rep(0, iters)
+	qhist <- c()
 	it <- 1
 	print('Unknown init as:')
 	pij <- pijmat(alpha, gamma)
@@ -114,26 +119,24 @@ em <- function(
 		alpha <- temp_alpha
 
 		qnow <- qval(xmat, ymat, pij, alpha, gamma)
-		qhist[it] <- qnow
+		qhist <- c(qhist, qnow)
 		qd <- 0
 		if (it > 1) qd <- qhist[it] - qhist[it-1]
 
 		r2 <- (cor(alpha, alpha_true))^2
 
-		# if (iters > 10) {
-		# 	if (it %% (iters/10) == 0) {
-		# 		print(sprintf(
-		# 			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.2f',
-		# 			it, qnow, qd, ad, r2))
-		# 	}
-		# }
 		print(sprintf(
 			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.2f',
 			it, qnow, qd, ad, r2))
+		# print(alpha)
 		it <- it + 1
 
 		if (ad <= converged) break
 	}
 
-	return(list(alpha, gamma, qhist, r2))
+	return(list(
+		alpha=alpha,
+		gamma=gamma,
+		qhist=qhist,
+		r2=r2))
 }

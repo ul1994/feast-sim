@@ -2,18 +2,19 @@
 library('permute')
 source('metrics.R')
 
+# saved <- readRDS('jsd.rda')
 saved <- readRDS('jsd.rda')
 data <- readRDS('liat.rds')
 scores <- saved[,3]
 
-targets <- c(0.75)
-folder <- '0750'
+targets <- c(0.50)
+folder <- '0500'
 thresh <- 0.005
-nSources <- 20
+nSources <- 21
 
 # this has some NAs...
 scores[is.na(scores)] <- -1
-sample_range <- 2000
+sample_range <- 500
 # targets <- c(0.125, 0.25, 0.5, 0.75)
 # targets <- c(0.25)
 track_index <- matrix(0, nrow=length(targets), ncol=2)
@@ -50,7 +51,7 @@ collect_rows <- function(inds, limitN=1000) {
 	return(mat)
 }
 
-for (si in 1:1) {
+for (si in 1:10) {
 	# sample around the indicies found
 	for (ti in 1:length(targets)) {
 		target <- targets[ti]
@@ -71,7 +72,11 @@ for (si in 1:1) {
 				}
 			}
 
+			if (min(rowSums(collect_rows(test_group))) == 0) {
+				break
+			}
 			test_avg <- jsdavg(collect_rows(test_group))
+			# print(test_avg)
 			if (running_avg == -1 || abs(test_avg - running_avg) < thresh) {
 				# acceptable jsd
 				# print(test_avg)

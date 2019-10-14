@@ -51,6 +51,8 @@ noisy_sources <- function(counts) {
 }
 
 mix_sink <- function(alpha, sources) {
+	# (b) Set the sink sample abundances to m*S per taxa.
+
 	sink <- rep(0, ncol(sources))
 
 	for (kk in 1:nrow(sources)) {
@@ -62,11 +64,14 @@ mix_sink <- function(alpha, sources) {
 }
 
 generate_alphas <- function(batch, numK, unk=1) {
+	# (a) Generate random mixing m ∼ P areto(α > 0), where Pm = 1
 	amat <- matrix(, nrow=batch, ncol=numK+unk)
 	for (ii in 1:batch) {
 		alph <- rpareto(numK + unk, 3, 1)
 		amat[ii,] <- alph / sum(alph)
 	}
+
+	if (batch == 1) return(amat[1,])
 	return(amat)
 }
 
