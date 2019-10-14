@@ -11,9 +11,11 @@ source('./metrics.R')
 
 ######################################################################
 # 0. Simulation arguments
+#
+# "In the simulations presented we used T1 = 10, T2 = 30, K = 20."
 ######################################################################
 
-T2_alphas <- 1 # 30 mixing proportions
+T2_alphas <- 30 # 30 mixing proportions
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -44,6 +46,7 @@ print(paste('Avg JSD is:', jsdavg(raw_sources))) # sanity check
 #  Multinomial distribution (denoted S^k).
 ######################################################################
 
+# FIXME: do this for each alpha test
 sources <- noisy_sources(raw_sources)
 
 ######################################################################
@@ -67,7 +70,9 @@ for (ii in 1:T2_alphas) {
 		iters=iters,
 		converged=10e-6,
 		alpha_true=alpha_true)
+	results$alpha_true <- alpha_true
 
+	# Keep all results for final scoring
 	collected_results <- append(collected_results, list(results))
 
 	# Save plot of Q history
@@ -77,6 +82,26 @@ for (ii in 1:T2_alphas) {
 	dev.off()
 }
 
+######################################################################
+# 4. Calculate the squared Pearson correlation (r2) between the
+#  estimated and the true mixing proportions per source and average
+#  across sources.
+######################################################################
+
+all_r2 <- c()
+for (result in collected_results) {
+	r2score <- result$r2
+	all_r2 <- c(all_r2, r2score)
+}
+print(paste('For JSD:', jsdavg(sources)))
+print(paste('Average R2:', sprintf('%.4f', mean(all_r2))))
+
+######################################################################
+# 5. Calculate the average Jensen-Shannon divergence of m (based on
+# the pairwise Jensen-Shannon divergence).
+######################################################################
+
+# print()
 # print(length(collected_results))
 # plot(
 # 	c(0.25, 0.4, 0.5),

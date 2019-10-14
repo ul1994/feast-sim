@@ -1,4 +1,8 @@
 
+r2 <- function(xx, yy) {
+	return(cov(xx, yy)^2)
+}
+
 jsdavg <- function(srcmat) {
 	proportions <- srcmat / rowSums(srcmat)
 	proportions <- srcmat / rowSums(srcmat)

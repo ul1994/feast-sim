@@ -126,7 +126,7 @@ em <- function(
 		r2 <- (cor(alpha, alpha_true))^2
 
 		print(sprintf(
-			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.2f',
+			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.4f',
 			it, qnow, qd, ad, r2))
 		# print(alpha)
 		it <- it + 1
