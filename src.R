@@ -61,16 +61,18 @@ em <- function(
 	xmat <- as.matrix(sink)
 	C <- sum(xmat)
 
-	alpha <- rep(1/(kk+1), kk+1)
+	alpha <- rep(1/(kk+unk), kk+unk)
 	beta <- xmat / sum(xmat)
 
 	gamma <- ymat / rowSums(ymat)
 	gamma[gamma < clip_zero] <- clip_zero
 	gamma <- gamma / rowSums(gamma) # allocate some prob to zero entries
 
-	unkrow <- rep(1/nn, nn) # augment gamma with a unknown source
-	gamma <- rbind(gamma, unkrow) # recalc proportional amounts
-	gamma <- gamma / rowSums(gamma) # FIXME: use Liat's method
+	if (unk > 0) {
+		unkrow <- rep(1/nn, nn) # augment gamma with a unknown source
+		gamma <- rbind(gamma, unkrow) # recalc proportional amounts
+		gamma <- gamma / rowSums(gamma) # FIXME: use Liat's method
+	}
 
 	# augment ymat with an empty row for ease of computation
 	emptyrow <- rep(0, nn)
@@ -109,15 +111,19 @@ em <- function(
 		if (it > 1) qd <- qhist[it] - qhist[it-1]
 		r2 <- 0
 		if (alpha_true != F)
-			r2 <- cor.test(alpha, alpha_true)$estimate
+			r2 <- (cor(alpha, alpha_true))^2
 
-		print(sprintf(
-			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.2f',
-			it, qnow, qd, ad, r2))
+		if (iters > 10) {
+			if (it %% (iters/10) == 0) {
+				print(sprintf(
+					'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.2f',
+					it, qnow, qd, ad, r2))
+			}
+		}
 		it <- it + 1
 
 		if (ad <= converged) break
 	}
 
-	return(list(alpha, gamma, qhist))
+	return(list(alpha, gamma, qhist, r2))
 }
