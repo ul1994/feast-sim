@@ -101,10 +101,4 @@ print(paste('Average R2:', sprintf('%.4f', mean(all_r2))))
 # the pairwise Jensen-Shannon divergence).
 ######################################################################
 
-# print()
-# print(length(collected_results))
-# plot(
-# 	c(0.25, 0.4, 0.5),
-# 	c(0.3898666, 0.5032391, 0.6060845),
-# 	'l', xlim=c(0, 1), ylim=c(0, 1))
-# lines(c(0, 1), c(0, 1), col="gray")
+# print(sources)

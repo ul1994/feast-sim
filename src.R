@@ -56,37 +56,31 @@ em <- function(
 	clip_zero=10e-12,
 	alpha_true=F) {
 
-	# sources <- sources[1:2,]
-	# alpha_true <- c(0.25, 0.75)
-	# sink <- t(sources) %*% alpha_true
-
-	# unk <- 0
-	# iters <- 50
-	# converged <- 10e-6
-	# clip_zero <- 10e-12
-
-	# prep data
+	#####################################################
+	# Initialization
+	#####################################################
 	kk <- nrow(sources)-unk
 	nn <- ncol(sources)
+
 	ymat <- as.matrix(sources)[1:kk,]
 	xmat <- as.matrix(sink)
+	beta <- xmat / sum(xmat)
 	C <- sum(xmat)
 
 	alpha <- rep(1/(kk+unk), kk+unk)
-	beta <- xmat / sum(xmat)
 
-	# gamma <- ymat / rowSums(ymat)
-	# gamma[gamma < clip_zero] <- clip_zero
-	gamma <- matrix(, nrow=nrow(ymat), ncol=ncol(ymat))
-	for (row in 1:nrow(ymat)) gamma[row,] <- runif(ncol(ymat), min = 0, max = 1)
-	gamma <- gamma / rowSums(gamma) # allocate some prob to zero entries
+	gamma <- ymat / rowSums(ymat)
+	gamma[gamma < clip_zero] <- clip_zero # allocate some prob to zero entries
+	gamma <- gamma / rowSums(gamma)
 
 	if (unk > 0) {
-		unkrow <- rep(1/nn, nn) # augment gamma with a unknown source
+		# Add unknown row to gamma
+		# FIXME: use Liat's method
+		unkrow <- rep(1/nn, nn)
 		gamma <- rbind(gamma, unkrow) # recalc proportional amounts
-		gamma <- gamma / rowSums(gamma) # FIXME: use Liat's method
+		gamma <- gamma / rowSums(gamma)
 
-		# augment ymat with an empty row for ease of computation
+		# Add empty row to ymat for ease of computation
 		emptyrow <- rep(0, nn)
 		ymat <- rbind(ymat, emptyrow)
 	}
@@ -94,14 +88,27 @@ em <- function(
 	temp_gamma <- matrix(, nrow=nrow(gamma), ncol=ncol(gamma))
 	temp_alpha <- rep(0, length(alpha))
 
-	qhist <- c()
-	it <- 1
-	print('Unknown init as:')
+
+	#####################################################
+	# EM
+	#####################################################
 	pij <- pijmat(alpha, gamma)
 	print(paste('Initial Q', qval(xmat, ymat, pij, alpha, gamma)))
 
+	it <- 1
+	qhist <- c()
 	while(it <= iters) {
+
+		#####################################################
+		# Compute p(i|j)
+		#####################################################
+
 		pij <- pijmat(alpha, gamma)
+
+
+		#####################################################
+		# Compute gamma and alpha
+		#####################################################
 
 		for (ii in 1:nrow(gamma)) {
 			for (jj in 1:ncol(gamma)) {
@@ -117,6 +124,13 @@ em <- function(
 		gamma <- temp_gamma
 		ad <- sum(abs(alpha - temp_alpha))
 		alpha <- temp_alpha
+
+		#####################################################
+		# Calc Q (qnow)s and other metrics
+		#  qd - difference in Q from t-1 to t
+		#  r2 - r2 score between known and inferred alpha
+		#  ad - total change in alpha from t-1 to t
+		#####################################################
 
 		qnow <- qval(xmat, ymat, pij, alpha, gamma)
 		qhist <- c(qhist, qnow)
