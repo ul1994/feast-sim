@@ -105,7 +105,6 @@ em <- function(
 
 		pij <- pijmat(alpha, gamma)
 
-
 		#####################################################
 		# Compute gamma and alpha
 		#####################################################
@@ -126,7 +125,7 @@ em <- function(
 		alpha <- temp_alpha
 
 		#####################################################
-		# Calc Q (qnow)s and other metrics
+		# Calc Q (qnow) and other metrics
 		#  qd - difference in Q from t-1 to t
 		#  r2 - r2 score between known and inferred alpha
 		#  ad - total change in alpha from t-1 to t
@@ -142,7 +141,6 @@ em <- function(
 		print(sprintf(
 			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.4f',
 			it, qnow, qd, ad, r2))
-		# print(alpha)
 		it <- it + 1
 
 		if (ad <= converged) break

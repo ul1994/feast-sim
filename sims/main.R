@@ -1,7 +1,14 @@
 
+######################################################################
 # main.R
+#
 # Main simulation study
 #  R^2 score is reported for a specified JSD among sources
+#
+# Sample command:
+# Rscript sims/main.R 0.5 1000 saved/jsd/0500/sources_jsd_0500_050252.rds
+# Rscript sims/main.R (testing jsd) (iterations) (sources file to load)
+######################################################################
 
 library('stats')
 source('./sim.R')
@@ -36,7 +43,7 @@ print(paste('Loading sources:', sources_file))
 # 1. Draw K + 1 samples S1, . . . , SK+1, from a selected data set.
 ######################################################################
 
-# Load the K+1 sources saved for having such JSD
+# Load the K+1 sources saved for having the stated JSD
 raw_sources <- readRDS(sources_file)
 print(paste('Num sources (K):', nrow(raw_sources))) # sanity check
 print(paste('Avg JSD is:', jsdavg(raw_sources))) # sanity check
@@ -46,7 +53,6 @@ print(paste('Avg JSD is:', jsdavg(raw_sources))) # sanity check
 #  Multinomial distribution (denoted S^k).
 ######################################################################
 
-# FIXME: do this for each alpha test
 sources <- noisy_sources(raw_sources)
 
 ######################################################################
@@ -55,6 +61,7 @@ sources <- noisy_sources(raw_sources)
 
 collected_results <- list()
 for (ii in 1:T2_alphas) {
+
 	# (a) Generate random mixing m ∼ P areto(α > 0), where Pm = 1.
 	alpha_true <- generate_alphas(1,
 		numK=nrow(sources)-1,
@@ -67,9 +74,11 @@ for (ii in 1:T2_alphas) {
 	#  S^1, . . . , S^K.
 	# print(paste('True unknown proportion:', alpha_true[nrow(sources)]))
 	results <- em(sink, sources,
+		unk=1,
 		iters=iters,
 		converged=10e-6,
 		alpha_true=alpha_true)
+
 	results$alpha_true <- alpha_true
 
 	# Keep all results for final scoring
@@ -101,4 +110,10 @@ print(paste('Average R2:', sprintf('%.4f', mean(all_r2))))
 # the pairwise Jensen-Shannon divergence).
 ######################################################################
 
-# print(sources)
+all_jsd <- c()
+for (result in collected_results) {
+	val <- jsd(result$alpha, result$alpha_true)
+	all_jsd <- c(all_jsd, val)
+}
+print(paste('For JSD:', jsdavg(sources)))
+print(paste('Average JSD of m:', sprintf('%.4f', mean(all_jsd))))
