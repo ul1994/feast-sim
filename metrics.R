@@ -1,7 +1,10 @@
 
-jsdavg <- function(srcmat, normalize=T) {
+jsdavg <- function(srcmat) {
 	proportions <- srcmat / rowSums(srcmat)
+	proportions <- srcmat / rowSums(srcmat)
+
 	mat <- jsdmatrix(proportions)
+
 	jsum <- c()
 	for (ii in 1:(ncol(mat)-1)) {
 		for (jj in (ii+1):ncol(mat)) {

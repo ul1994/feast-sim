@@ -12,7 +12,6 @@ thresh <- 0.005
 nSources <- 20
 
 # this has some NAs...
-where.min(is.na(scores))
 scores[is.na(scores)] <- -1
 sample_range <- 2000
 # targets <- c(0.125, 0.25, 0.5, 0.75)
@@ -51,7 +50,7 @@ collect_rows <- function(inds, limitN=1000) {
 	return(mat)
 }
 
-for (si in 1:30) {
+for (si in 1:1) {
 	# sample around the indicies found
 	for (ti in 1:length(targets)) {
 		target <- targets[ti]
