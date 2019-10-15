@@ -3,7 +3,7 @@
 # main.R
 #
 # Main simulation study
-#  R^2 score is reported for a specified JSD among sources
+#  R^2 score is reported for sources with a known JSD
 #
 # Sample command:
 # Rscript sims/main.R 0.5 1000 saved/jsd/0500/sources_jsd_0500_050252.rds
