@@ -1,6 +1,9 @@
 
-r2 <- function(xx, yy) {
-	return(cov(xx, yy)^2)
+r2 <- function(yhat, ytrue) {
+	num <- sum((yhat - mean(ytrue))^2)
+	denom <- sum((ytrue - mean(ytrue))^2)
+
+	return(num/denom)
 }
 
 jsdavg <- function(srcmat) {

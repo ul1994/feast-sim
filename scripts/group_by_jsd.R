@@ -7,8 +7,8 @@ saved <- readRDS('jsd.rda')
 data <- readRDS('liat.rds')
 scores <- saved[,3]
 
-targets <- c(0.50)
-folder <- '0500'
+targets <- c(0.08)
+folder <- '0080'
 thresh <- 0.005
 nSources <- 21
 

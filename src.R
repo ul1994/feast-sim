@@ -1,4 +1,8 @@
 
+Rcpp::sourceCpp('~/FEAST/src/rcppSchur.cpp')
+source('~/FEAST/R/Infer_LatentVariables.R')
+source('~/FEAST/R/utils.R')
+
 qval <- function(xx, yy, pij, alpha, gamma, clip_zero=10e-12) {
 	xterm <- 0
 	yterm <- 0
@@ -48,6 +52,83 @@ gamma_ij <- function(ii, jj, pij, alpha, gamma, xx, yy) {
 alpha_i <- function(ii, C, pij, gamma, xx) {
 	asum <- 1/C * (t(xx) %*% pij[ii,])
 	return(asum)
+}
+
+official_feast_wrapper <- function(sink, sources, iters, unk=1, clip_zero=10e-12) {
+	sink <- as.integer(sink)
+	COVERAGE <-  min(rowSums(sources))
+	kk <- nrow(sources)
+	alpha <- rep(1/(kk+unk), kk+unk)
+	num_sources <- kk
+
+	totalsource<-as.matrix(sources)
+	unknown_source <- unknown_initialize_1(
+		sources = totalsource[c(1:num_sources),],
+		sink = as.numeric(sink),
+		n_sources = num_sources)
+
+	# Initializing unknown
+	source_old <- sources
+	totalsource_old <- totalsource
+	source_old<-lapply(source_old,t)
+	source_old<- split(totalsource_old, seq(nrow(totalsource_old)))
+	source_old<-lapply(source_old, as.matrix)
+
+	source_2 <- list()
+    totalsource_2 <- matrix(NA, ncol = dim(totalsource_old)[2], nrow = ( dim(totalsource_old)[1] + 1))
+    for(j in 1:num_sources){
+		source_2[[j]] <- source_old[[j]]
+		totalsource_2[j,] <- totalsource_old[j,]
+    }
+	unknown_source_rarefy <- FEAST_rarefy(
+		matrix(unknown_source, nrow = 1),
+		maxdepth = COVERAGE)
+    source_2[[j+1]] <- t(unknown_source_rarefy)
+    totalsource_2[(j+1),] <- t(unknown_source_rarefy)
+    totalsource <- totalsource_2
+    source=lapply(source_2,t)
+    source<- split(totalsource, seq(nrow(totalsource_2)))
+    source<-lapply(source_2, as.matrix)
+
+	# observed_samps
+	samps <- source
+	samps<-lapply(samps, t)
+
+	observed_samps <- samps
+	observed_samps[[(num_sources + 1)]] <- t(rep(0, dim(samps[[1]])[2]))
+
+	sink_em <- t(as.integer(as.matrix(sink)))
+
+	print(typeof(samps))
+	print(typeof(samps[[1]]))
+	print(nrow(samps[[1]]))
+	print(ncol(samps[[1]]))
+
+	print(typeof(observed_samps))
+	print(typeof(observed_samps[[1]]))
+	print(nrow(observed_samps[[1]]))
+	print(ncol(observed_samps[[1]]))
+
+	print(sum(observed_samps[[1]] - samps[[1]]))
+
+
+	print(typeof(alpha))
+	print(length(alpha))
+	print(paste(nrow(alpha), ncol(alpha)))
+	print(typeof(sink_em))
+	print(length(sink_em))
+	print(paste(nrow(sink_em), ncol(sink_em)))
+
+	em_results <- do_EM(
+		alphas=alpha,
+		sources=samps, sink=sink_em,
+		observed=observed_samps,
+		iters)
+	ret <- list(
+		alpha=em_results$toret,
+		gamma=em_results$sources) # FIXME: not quite gamma
+
+	return(ret)
 }
 
 em <- function(
@@ -127,7 +208,6 @@ em <- function(
 		#####################################################
 		# Calc Q (qnow) and other metrics
 		#  qd - difference in Q from t-1 to t
-		#  r2 - r2 score between known and inferred alpha
 		#  ad - total change in alpha from t-1 to t
 		#####################################################
 
@@ -136,11 +216,9 @@ em <- function(
 		qd <- 0
 		if (it > 1) qd <- qhist[it] - qhist[it-1]
 
-		r2 <- (cor(alpha, alpha_true))^2
-
 		print(sprintf(
-			'%d Q:%.2f qd:%.2f ad:%.5f, r2:%.4f',
-			it, qnow, qd, ad, r2))
+			'%d Q:%.2f qd:%.2f ad:%.5f',
+			it, qnow, qd, ad))
 		it <- it + 1
 
 		if (ad <= converged) break
@@ -149,6 +227,5 @@ em <- function(
 	return(list(
 		alpha=alpha,
 		gamma=gamma,
-		qhist=qhist,
-		r2=r2))
+		qhist=qhist))
 }
