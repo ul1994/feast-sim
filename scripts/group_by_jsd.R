@@ -3,18 +3,18 @@ library('permute')
 source('metrics.R')
 
 # saved <- readRDS('jsd.rda')
-saved <- readRDS('jsd.rda')
+batch<- '10k'
+saved <- readRDS('jsd_10k.rds')
 data <- readRDS('liat.rds')
 scores <- saved[,3]
 
-targets <- c(0.08)
-folder <- '0080'
+targets <- c(0.08, 0.125, 0.50, 0.90)
 thresh <- 0.005
 nSources <- 21
 
 # this has some NAs...
 scores[is.na(scores)] <- -1
-sample_range <- 500
+sample_range <- 400
 # targets <- c(0.125, 0.25, 0.5, 0.75)
 # targets <- c(0.25)
 track_index <- matrix(0, nrow=length(targets), ncol=2)
@@ -41,9 +41,10 @@ for (ii in 1:length(ord)) {
 }
 
 print(track_index)
+print(length(ord))
 # print(saved[track_index[1,1]-1,])
 
-collect_rows <- function(inds, limitN=1000) {
+collect_rows <- function(inds, limitN=10000) {
 	mat <- matrix(, nrow=length(inds), ncol=limitN)
 	for (ii in 1:length(inds)) {
 		mat[ii,] <- data[inds[ii],1:limitN]
@@ -51,7 +52,7 @@ collect_rows <- function(inds, limitN=1000) {
 	return(mat)
 }
 
-for (si in 1:10) {
+for (si in 1:3) {
 	# sample around the indicies found
 	for (ti in 1:length(targets)) {
 		target <- targets[ti]
@@ -72,8 +73,8 @@ for (si in 1:10) {
 				}
 			}
 
-			if (min(rowSums(collect_rows(test_group))) == 0) {
-				break
+			if (min(rowSums(collect_rows(test_group))) < 250) {
+				next
 			}
 			test_avg <- jsdavg(collect_rows(test_group))
 			# print(test_avg)
@@ -89,12 +90,13 @@ for (si in 1:10) {
 
 		group <- group[1:nSources]
 		final_avg <- jsdavg(collect_rows(group))
-		print(paste('Obtained:', length(group), final_avg))
+		print(paste('Obtained:', target, length(group), final_avg))
 		saveRDS(
 			collect_rows(group),
 			file=sprintf(
-				'saved/jsd/%s/sources_jsd_0%d_0%d.rds',
-				folder,
+				'saved/jsd/%s/%04d/sources_jsd_%04d_%06d.rds',
+				batch,
+				as.integer(target * 1000),
 				as.integer(target * 1000),
 				as.integer(final_avg * 100000)))
 	}

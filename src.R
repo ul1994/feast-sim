@@ -54,79 +54,31 @@ alpha_i <- function(ii, C, pij, gamma, xx) {
 	return(asum)
 }
 
-official_feast_wrapper <- function(sink, sources, iters, unk=1, clip_zero=10e-12) {
-	sink <- as.integer(sink)
-	COVERAGE <-  min(rowSums(sources))
-	kk <- nrow(sources)
-	alpha <- rep(1/(kk+unk), kk+unk)
-	num_sources <- kk
+#'
+#' Wrapper for official procedure Infer.SourceContributions
+#'
+#' @param sink N x 1 vector of sink counts
+#' @param full_sources (K+1 x N) count matrix including unknown if available
+#'
+official_feast_wrapper <- function(sink, full_sources, iters, unk=1, clip_zero=10e-12) {
 
-	totalsource<-as.matrix(sources)
-	unknown_source <- unknown_initialize_1(
-		sources = totalsource[c(1:num_sources),],
-		sink = as.numeric(sink),
-		n_sources = num_sources)
+	sources <- full_sources[1:(nrow(full_sources)-1),]
+	print(rowSums(sources))
+	# add in placeholder row names as required by Infer.SourceContribution
+	rownames(sources) <- apply(
+			as.matrix(1:nrow(sources)), 1,
+			function(i) sprintf('E%d', i))
 
-	# Initializing unknown
-	source_old <- sources
-	totalsource_old <- totalsource
-	source_old<-lapply(source_old,t)
-	source_old<- split(totalsource_old, seq(nrow(totalsource_old)))
-	source_old<-lapply(source_old, as.matrix)
+	COVERAGE <- min(rowSums(sources))
 
-	source_2 <- list()
-    totalsource_2 <- matrix(NA, ncol = dim(totalsource_old)[2], nrow = ( dim(totalsource_old)[1] + 1))
-    for(j in 1:num_sources){
-		source_2[[j]] <- source_old[[j]]
-		totalsource_2[j,] <- totalsource_old[j,]
-    }
-	unknown_source_rarefy <- FEAST_rarefy(
-		matrix(unknown_source, nrow = 1),
-		maxdepth = COVERAGE)
-    source_2[[j+1]] <- t(unknown_source_rarefy)
-    totalsource_2[(j+1),] <- t(unknown_source_rarefy)
-    totalsource <- totalsource_2
-    source=lapply(source_2,t)
-    source<- split(totalsource, seq(nrow(totalsource_2)))
-    source<-lapply(source_2, as.matrix)
+	FEAST_output<-Infer.SourceContribution(
+		source=sources,
+		sinks = as.integer(as.matrix(sink)),
+		env = rownames(sources),
+		em_itr = iters, COVERAGE = COVERAGE)
 
-	# observed_samps
-	samps <- source
-	samps<-lapply(samps, t)
-
-	observed_samps <- samps
-	observed_samps[[(num_sources + 1)]] <- t(rep(0, dim(samps[[1]])[2]))
-
-	sink_em <- t(as.integer(as.matrix(sink)))
-
-	print(typeof(samps))
-	print(typeof(samps[[1]]))
-	print(nrow(samps[[1]]))
-	print(ncol(samps[[1]]))
-
-	print(typeof(observed_samps))
-	print(typeof(observed_samps[[1]]))
-	print(nrow(observed_samps[[1]]))
-	print(ncol(observed_samps[[1]]))
-
-	print(sum(observed_samps[[1]] - samps[[1]]))
-
-
-	print(typeof(alpha))
-	print(length(alpha))
-	print(paste(nrow(alpha), ncol(alpha)))
-	print(typeof(sink_em))
-	print(length(sink_em))
-	print(paste(nrow(sink_em), ncol(sink_em)))
-
-	em_results <- do_EM(
-		alphas=alpha,
-		sources=samps, sink=sink_em,
-		observed=observed_samps,
-		iters)
 	ret <- list(
-		alpha=em_results$toret,
-		gamma=em_results$sources) # FIXME: not quite gamma
+		alpha=FEAST_output$data_prop[,1])
 
 	return(ret)
 }

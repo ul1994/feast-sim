@@ -35,7 +35,7 @@ source('./metrics.R')
 ######################################################################
 
 FEAST_OFFICIAL <- T
-T2_alphas <- 2 # 30 mixing proportions
+T2_alphas <- 30 # 30 mixing proportions
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -46,7 +46,6 @@ print(paste('Choosing JSD:', jsd_arg))
 # iterations
 iters <- as.integer(args[2])
 print(paste('# iterations per sim:', iters))
-
 
 # Sources file
 sources_file <- args[3]
@@ -88,8 +87,7 @@ for (ii in 1:T2_alphas) {
 	# print(paste('True unknown proportion:', alpha_true[nrow(sources)]))
 	print(paste('Mix', ii, '/', T2_alphas))
 	if (FEAST_OFFICIAL) {
-		known_only <- sources[1:(nrow(sources)-1),]
-		results <- official_feast_wrapper(sink, known_only, iters)
+		results <- official_feast_wrapper(sink, sources, iters)
 	}
 	else {
 		results <- em(sink, sources,
@@ -119,6 +117,9 @@ for (ii in 1:T2_alphas) {
 inf_alphas <- matrix(, nrow=T2_alphas, ncol=nrow(sources))
 true_alphas <- matrix(, nrow=T2_alphas, ncol=nrow(sources))
 for (ti in 1:T2_alphas) {
+	print(paste(
+		collected_results[[ti]]$alpha[21],
+		collected_results[[ti]]$alpha_true[21]))
 	inf_alphas[ti,] <- collected_results[[ti]]$alpha
 	true_alphas[ti,] <- collected_results[[ti]]$alpha_true
 }
@@ -132,10 +133,10 @@ print(paste('For JSD:', jsdavg(sources)))
 print(r2_bysource)
 print(paste('Average R2:', sprintf('%.4f', mean(r2_bysource))))
 
-# ######################################################################
-# # 5. Calculate the average Jensen-Shannon divergence of m (based on
-# # the pairwise Jensen-Shannon divergence).
-# ######################################################################
+######################################################################
+# 5. Calculate the average Jensen-Shannon divergence of m (based on
+# the pairwise Jensen-Shannon divergence).
+######################################################################
 
 # all_jsd <- c()
 # for (result in collected_results) {

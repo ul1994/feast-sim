@@ -2,7 +2,7 @@
 source('metrics.R')
 source('sim.R')
 
-limitN <- 5000
+limitN <- 10000
 subsample <- 100 # between every Nth
 
 data <- readRDS('liat.rds')
