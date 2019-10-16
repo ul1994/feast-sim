@@ -63,7 +63,6 @@ alpha_i <- function(ii, C, pij, gamma, xx) {
 official_feast_wrapper <- function(sink, full_sources, iters, unk=1, clip_zero=10e-12) {
 
 	sources <- full_sources[1:(nrow(full_sources)-1),]
-	print(rowSums(sources))
 	# add in placeholder row names as required by Infer.SourceContribution
 	rownames(sources) <- apply(
 			as.matrix(1:nrow(sources)), 1,
