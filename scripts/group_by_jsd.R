@@ -1,26 +1,41 @@
 
+########################################################################
+#' group_by_jsd.R
+#'
+#' Taking the output of `find_jsd_pairs.R` finds groups of sources which
+#' have approximately a desired pairwise avg JSD
+#'
+#' @param batch For bookkeeping. Umbrella folder where everything will be saved in
+#' @param saved Saved output of `find_jsd_pairs.R`
+#' @param data Raw EMP data
+#' @param targets Desired JSDs to find groups for
+#' @param thresh Amount of avg JSD change at which sampled pairs will be rejected from a group
+#' @param sample_range Max range to sample before and after where
+#'  the desired JSD appears after sorting
+#' @param nSources Number of sources to be collected per group
+#'
+########################################################################
+
 library('permute')
 source('metrics.R')
 
-# saved <- readRDS('jsd.rda')
 batch<- '10k'
 saved <- readRDS('jsd_10k.rds')
 data <- readRDS('liat.rds')
-scores <- saved[,3]
-
 targets <- c(0.08, 0.125, 0.50, 0.90)
 thresh <- 0.005
+sample_range <- 400
 nSources <- 21
 
-# this has some NAs...
-scores[is.na(scores)] <- -1
-sample_range <- 400
-# targets <- c(0.125, 0.25, 0.5, 0.75)
-# targets <- c(0.25)
-track_index <- matrix(0, nrow=length(targets), ncol=2)
+scores <- saved[,3] # Precomputed JSD is in 3rd col
+scores[is.na(scores)] <- -1 # this has some NAs...
 ord <- order(scores)
 
-# assuming scores are spread nicely, find ranges to sample from
+########################################################################
+#' For each desired JSD, save where they appear in the sorted list
+########################################################################
+
+track_index <- matrix(0, nrow=length(targets), ncol=2)
 starting <- 1
 for (ii in 1:length(ord)) {
 	ind <- ord[ii]
@@ -42,8 +57,8 @@ for (ii in 1:length(ord)) {
 
 print(track_index)
 print(length(ord))
-# print(saved[track_index[1,1]-1,])
 
+# Helper function to construct sources matrix given their inds in EMP
 collect_rows <- function(inds, limitN=10000) {
 	mat <- matrix(, nrow=length(inds), ncol=limitN)
 	for (ii in 1:length(inds)) {
@@ -51,6 +66,16 @@ collect_rows <- function(inds, limitN=10000) {
 	}
 	return(mat)
 }
+
+########################################################################
+#' Try 3 times per desired JSD to find a group of sources
+#' which approx. has that average JSD.
+#'
+#' Groups are saved to `saved/jsd/{batch}/{desired JSD}/${saved sources mat}.rds`
+#'
+#' NOTE: nSources should be K+1 to include an unknown source
+#'
+########################################################################
 
 for (si in 1:3) {
 	# sample around the indicies found

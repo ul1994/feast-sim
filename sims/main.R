@@ -57,7 +57,7 @@ print(paste('Loading sources:', sources_file))
 
 # Load the K+1 sources saved for having the stated JSD
 raw_sources <- readRDS(sources_file)
-print(paste('Num sources (K):', nrow(raw_sources))) # sanity check
+print(paste('Num sources (K+1):', nrow(raw_sources))) # sanity check
 print(paste('Avg JSD is:', jsdavg(raw_sources))) # sanity check
 
 ######################################################################
