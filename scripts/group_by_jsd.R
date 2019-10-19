@@ -5,11 +5,13 @@
 #' Taking the output of `find_jsd_pairs.R` finds groups of sources which
 #' have approximately a desired pairwise avg JSD
 #'
-#' @param batch For bookkeeping. Umbrella folder where everything will be saved in
+#' @param batch For bookkeeping.
+#'  Umbrella folder where everything will be saved inside
 #' @param saved Saved output of `find_jsd_pairs.R`
 #' @param data Raw EMP data
 #' @param targets Desired JSDs to find groups for
-#' @param thresh Amount of avg JSD change at which sampled pairs will be rejected from a group
+#' @param thresh Amount of avg JSD change at which sampled pairs
+#'  will be rejected from a group
 #' @param sample_range Max range to sample before and after where
 #'  the desired JSD appears after sorting
 #' @param nSources Number of sources to be collected per group
@@ -77,13 +79,15 @@ collect_rows <- function(inds, limitN=10000) {
 #'
 ########################################################################
 
-for (si in 1:3) {
-	# sample around the indicies found
-	for (ti in 1:length(targets)) {
-		target <- targets[ti]
-		median <- track_index[ti, 1]
-		check <- shuffle(-sample_range:sample_range)
 
+for (ti in 1:length(targets)) {
+	target <- targets[ti]
+	print(paste('Target', target))
+	median <- track_index[ti, 1]
+
+	for (si in 1:10) {
+		# sample before and after where the JSD appearss
+		check <- shuffle(-sample_range:sample_range)
 		group <- c()
 		running_avg <- -1
 		for (offset in check) {

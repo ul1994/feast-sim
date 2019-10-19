@@ -126,7 +126,9 @@ for (ti in 1:T2_alphas) {
 r2_bysource <- c()
 for (si in 1:nrow(sources)) {
 	r2 <- cor(inf_alphas[,si], true_alphas[,si])^2
-	r2_bysource <- c(r2_bysource, r2)
+	if (!is.na(r2)) {
+		r2_bysource <- c(r2_bysource, r2)
+	}
 }
 
 print(paste('For JSD:', jsdavg(sources)))
