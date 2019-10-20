@@ -77,7 +77,10 @@ official_feast_wrapper <- function(sink, full_sources, iters, unk=1, clip_zero=1
 		em_itr = iters, COVERAGE = COVERAGE)
 
 	ret <- list(
-		alpha=FEAST_output$data_prop[,1])
+		alpha=FEAST_output$data_prop[,1],
+		qhist=FEAST_output$qhist)
+
+	# TODO: plot Q value history for inspection
 
 	return(ret)
 }
