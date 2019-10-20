@@ -9,6 +9,7 @@
 ######################################################################
 
 library('stats')
+library('ggplot2')
 source('./sim.R')
 source('./src.R')
 source('./sims/utils.R')
@@ -19,6 +20,7 @@ source('./metrics.R')
 #'
 #' Fixed configs
 #' @param sources_file # of mixing proportions to test
+#' @param compare_test # of mixing proportions to test
 #'
 #' CLI parameters
 #' @param T2_alphas # of mixing proportions to test
@@ -32,6 +34,7 @@ source('./metrics.R')
 
 # Sources file: using one fixed source
 sources_file <- 'saved/unk/sources_jsd_0900_090164.rds'
+compare_test <- T
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -94,16 +97,59 @@ for (ii in 1:T2_alphas) {
 	# last elements are always assumed to be the unknown sources
 	#  if any provided (they are removed for FEAST)
 	known_sources <- sources[1:(nrow(sources)-maxUnk),]
-	results <- official_feast_wrapper(sink, known_sources, iters, unk=numUnk)
+
+	if (compare_test) {
+		results <- official_feast_wrapper(sink, known_sources, iters, unknowns=1)
+
+		# Keep all results for final scoring
+		results$alpha_true <- alpha_true
+		compare_test_score <- tail(results$qhist, n=1)
+		compare_test_hist <- results$qhist
+		# compare_collected_results <- append(collected_results, list(results))
+	}
+
+	# Main multi-unknown test
+	results <- official_feast_wrapper(sink, known_sources, iters, unknowns=numUnk)
 
 	# Keep all results for final scoring
 	results$alpha_true <- alpha_true
-	collected_results <- append(collected_results, list(results))
+	main_test_score <- tail(results$qhist, n=1)
+	main_test_hist <- results$qhist
+	# main_collected_results <- append(collected_results, list(results))
 
 	pltfile <- sprintf('plots/unk/%d.jpg', ii)
-	jpeg(pltfile, width = 350, height = 350)
-	plot(c(1:length(results$qhist)), results$qhist, 'l')
-	dev.off()
+	if (compare_test) {
+		inds <- c()
+		diff <- length(compare_test_hist) - length(main_test_hist)
+
+		inds <- 1:length(compare_test_hist)
+		if (diff > 0) {
+			main_test_hist <- c(main_test_hist, rep(tail(main_test_hist, n=1), diff))
+		}
+		else if(diff < 0) {
+			inds <- 1:length(main_test_hist)
+			print(diff)
+			compare_test_hist <- c(compare_test_hist, rep(tail(compare_test_hist, n=1), -diff))
+		}
+
+		df <- data.frame(
+			inds=inds,
+			one=compare_test_hist,
+			many=main_test_hist
+		)
+		g<-ggplot() +
+			geom_line(data=df, aes(x=inds, y=many), color='turquoise3') +
+			geom_line(data=df, aes(x=inds, y=one), color='orangered1')
+
+		ggsave(filename=pltfile)
+	}
+	else {
+		jpeg(pltfile, width = 350, height = 350)
+		plot(c(1:length(results$qhist)), results$qhist, 'l')
+		dev.off()
+	}
+
+	print(paste(main_test_score, compare_test_score))
 }
 
 exit(0)

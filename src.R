@@ -63,7 +63,7 @@ alpha_i <- function(ii, C, pij, gamma, xx) {
 official_feast_wrapper <- function(
 	sink, sources,
 	iters,
-	unk=1, clip_zero=10e-12) {
+	unknowns=1, clip_zero=10e-12) {
 
 	# add in placeholder row names as required by Infer.SourceContribution
 	rownames(sources) <- apply(
@@ -77,7 +77,7 @@ official_feast_wrapper <- function(
 		sinks = as.integer(as.matrix(sink)),
 		env = rownames(sources),
 		em_itr = iters, COVERAGE = COVERAGE,
-		unknowns=2)
+		unknowns=unknowns)
 
 	ret <- list(
 		alpha=FEAST_output$data_prop[,1],
