@@ -8,7 +8,6 @@ r2 <- function(yhat, ytrue) {
 
 jsdavg <- function(srcmat) {
 	proportions <- srcmat / rowSums(srcmat)
-	proportions <- srcmat / rowSums(srcmat)
 
 	mat <- jsdmatrix(proportions)
 

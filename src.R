@@ -60,9 +60,11 @@ alpha_i <- function(ii, C, pij, gamma, xx) {
 #' @param sink N x 1 vector of sink counts
 #' @param full_sources (K+1 x N) count matrix including unknown if available
 #'
-official_feast_wrapper <- function(sink, full_sources, iters, unk=1, clip_zero=10e-12) {
+official_feast_wrapper <- function(
+	sink, sources,
+	iters,
+	unk=1, clip_zero=10e-12) {
 
-	sources <- full_sources[1:(nrow(full_sources)-1),]
 	# add in placeholder row names as required by Infer.SourceContribution
 	rownames(sources) <- apply(
 			as.matrix(1:nrow(sources)), 1,
@@ -74,7 +76,8 @@ official_feast_wrapper <- function(sink, full_sources, iters, unk=1, clip_zero=1
 		source=sources,
 		sinks = as.integer(as.matrix(sink)),
 		env = rownames(sources),
-		em_itr = iters, COVERAGE = COVERAGE)
+		em_itr = iters, COVERAGE = COVERAGE,
+		unknowns=2)
 
 	ret <- list(
 		alpha=FEAST_output$data_prop[,1],

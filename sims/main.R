@@ -87,6 +87,7 @@ for (ii in 1:T2_alphas) {
 	# print(paste('True unknown proportion:', alpha_true[nrow(sources)]))
 	print(paste('Mix', ii, '/', T2_alphas))
 	if (FEAST_OFFICIAL) {
+		known_sources <- sources[1:(nrow(sources)-1),]
 		results <- official_feast_wrapper(sink, sources, iters)
 	}
 	else {

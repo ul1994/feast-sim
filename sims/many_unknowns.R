@@ -18,17 +18,17 @@ source('./metrics.R')
 #' 0. Simulation arguments
 #'
 #' Fixed configs
-#' @param nSrc # of sources predecided
-#' @param nUnk # of unknowns; total # loaded sources will be nSrc + nUnk
 #' @param sources_file # of mixing proportions to test
 #'
 #' CLI parameters
 #' @param T2_alphas # of mixing proportions to test
 #' @param iterations Number of max EM iterations
+#' @param numUnk # of unknowns to be used
+#' @param maxUnk Given sources are assumed to be (K+U) many.
+#'  To perform comparable tests K+1, K+2, ..., K+U the total num
+#'  of U must be decided beforehand.
+#'
 ######################################################################
-
-nSrc <- 19
-nUnk <- 2
 
 # Sources file: using one fixed source
 sources_file <- 'saved/unk/sources_jsd_0900_090164.rds'
@@ -41,14 +41,21 @@ print(paste('# Mixes to test:', T2_alphas))
 iters <- as.integer(args[2])
 print(paste('# Max iterations per test:', iters))
 
+numUnk <- as.integer(args[3])
+maxUnk <- as.integer(args[3])
+
 ######################################################################
 # 1. Draw K + 2 samples S1, . . . , SK+1, SK+2 from a selected data set.
 ######################################################################
 
 # Load the sources saved for having the stated JSD
 raw_sources <- readRDS(sources_file)
-print(paste('Num sources (K+1):', nrow(raw_sources))) # sanity check
-print(paste('Initial JSD is:', jsdavg(raw_sources))) # sanity check
+print(paste('Total JSD is:', jsdavg(raw_sources))) # sanity check
+
+print(sprintf('Num sources (K+%d): %d', numUnk, nrow(raw_sources))) # sanity check
+print(paste('# Knowns:', (nrow(raw_sources)-maxUnk)))
+print(paste('# Unknowns:', numUnk))
+print(paste('# Sources given:', nrow(raw_sources)))
 
 ######################################################################
 # 2. Draw noisy realization of S1, . . . , SK+1 from the
@@ -58,6 +65,11 @@ print(paste('Initial JSD is:', jsdavg(raw_sources))) # sanity check
 sources <- raw_sources
 # sources <- noisy_sources(raw_sources)
 # print(paste('Noised JSD is:', jsdavg(sources)))
+
+normed <- sources / rowSums(sources)
+u1 <- normed[nrow(sources) - 1,]
+u2 <- normed[nrow(sources),]
+print(paste('JSD of last two sources:', jsd(u1, u2)))
 
 ######################################################################
 # 3. For each i = 1 : T2 (different mixing proportions):
@@ -78,7 +90,11 @@ for (ii in 1:T2_alphas) {
 	#  S^1, . . . , S^K.
 	# print(paste('True unknown proportion:', alpha_true[nrow(sources)]))
 	print(paste('Mix', ii, '/', T2_alphas))
-	results <- official_feast_wrapper(sink, sources, iters)
+
+	# last elements are always assumed to be the unknown sources
+	#  if any provided (they are removed for FEAST)
+	known_sources <- sources[1:(nrow(sources)-maxUnk),]
+	results <- official_feast_wrapper(sink, known_sources, iters, unk=numUnk)
 
 	# Keep all results for final scoring
 	results$alpha_true <- alpha_true
