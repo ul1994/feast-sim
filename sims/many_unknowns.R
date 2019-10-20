@@ -34,7 +34,7 @@ source('./metrics.R')
 
 # Sources file: using one fixed source
 sources_file <- 'saved/unk/sources_jsd_0900_090164.rds'
-compare_test <- T
+compare_test <- F
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -45,7 +45,14 @@ iters <- as.integer(args[2])
 print(paste('# Max iterations per test:', iters))
 
 numUnk <- as.integer(args[3])
-maxUnk <- as.integer(args[3])
+maxUnk <- as.integer(args[4])
+
+given_alpha <- NA
+if (length(args) > 4) {
+	given_alpha <- readRDS(args[5])
+	print('Loading a previously saved mixing prop')
+	T2_alphas <- 1 # test this one
+}
 
 ######################################################################
 # 1. Draw K + 2 samples S1, . . . , SK+1, SK+2 from a selected data set.
@@ -86,6 +93,7 @@ for (ii in 1:T2_alphas) {
 	alpha_true <- generate_alphas(1,
 		numK=nK,
 		unk=numUnk)
+	if (!is.na(given_alpha)) alpha_true <- given_alpha
 
 	saveRDS(alpha_true, sprintf('saved/alphas/%d.rds', ii))
 
@@ -145,6 +153,8 @@ for (ii in 1:T2_alphas) {
 			geom_line(data=df, aes(x=inds, y=one), color='orangered1')
 
 		ggsave(filename=pltfile)
+
+		print(paste(main_test_score, compare_test_score))
 	}
 	else {
 		jpeg(pltfile, width = 350, height = 350)
@@ -152,7 +162,6 @@ for (ii in 1:T2_alphas) {
 		dev.off()
 	}
 
-	print(paste(main_test_score, compare_test_score))
 }
 
 exit(0)
