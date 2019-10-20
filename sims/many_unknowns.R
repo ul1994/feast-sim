@@ -69,6 +69,7 @@ sources <- raw_sources
 # sources <- noisy_sources(raw_sources)
 # print(paste('Noised JSD is:', jsdavg(sources)))
 
+nK <- nrow(sources)-numUnk
 normed <- sources / rowSums(sources)
 u1 <- normed[nrow(sources) - 1,]
 u2 <- normed[nrow(sources),]
@@ -83,8 +84,10 @@ for (ii in 1:T2_alphas) {
 
 	# (a) Generate random mixing m ∼ P areto(α > 0), where Pm = 1.
 	alpha_true <- generate_alphas(1,
-		numK=nrow(sources)-1,
-		unk=1)
+		numK=nK,
+		unk=numUnk)
+
+	saveRDS(alpha_true, sprintf('saved/alphas/%d.rds', ii))
 
 	# (b) Set the sink sample abundances to m*S per taxa
 	sink <- t(sources) %*% alpha_true
@@ -92,7 +95,7 @@ for (ii in 1:T2_alphas) {
 	# (c) Estimate the known source proportions in the sink using
 	#  S^1, . . . , S^K.
 	# print(paste('True unknown proportion:', alpha_true[nrow(sources)]))
-	print(paste('Mix', ii, '/', T2_alphas))
+	print(sprintf('Mix %d/%d (unk_prop %.2f)', ii, T2_alphas, sum(alpha_true[nK:(nK+numUnk)])))
 
 	# last elements are always assumed to be the unknown sources
 	#  if any provided (they are removed for FEAST)
