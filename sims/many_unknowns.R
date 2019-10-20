@@ -8,12 +8,13 @@
 #'
 ######################################################################
 
+root <- '.'
 library('stats')
 library('ggplot2')
-source('./sim.R')
-source('./src.R')
-source('./sims/utils.R')
-source('./metrics.R')
+source(sprintf('%s/sim.R', root))
+source(sprintf('%s/src.R', root))
+source(sprintf('%s/sims/utils.R', root))
+source(sprintf('%s/metrics.R', root))
 
 ######################################################################
 #' 0. Simulation arguments
@@ -33,19 +34,23 @@ source('./metrics.R')
 ######################################################################
 
 # Sources file: using one fixed source
-sources_file <- 'saved/unk/sources_jsd_0900_090164.rds'
-compare_test <- F
+sources_file <- sprintf('%s/saved/unk/sources_jsd_0900_090164.rds', root)
+compare_test <- T
 
 args = commandArgs(trailingOnly=TRUE)
 
 # iterations
 T2_alphas <- as.integer(args[1])
+# T2_alphas <- 1
 print(paste('# Mixes to test:', T2_alphas))
 iters <- as.integer(args[2])
+# iters <- 20
 print(paste('# Max iterations per test:', iters))
 
 numUnk <- as.integer(args[3])
 maxUnk <- as.integer(args[4])
+# numUnk <- 2
+# maxUnk <- 2
 
 given_alpha <- NA
 if (length(args) > 4) {
@@ -53,6 +58,7 @@ if (length(args) > 4) {
 	print('Loading a previously saved mixing prop')
 	T2_alphas <- 1 # test this one
 }
+# given_alpha <- readRDS('gen/saved/alphas/4.rds')
 
 ######################################################################
 # 1. Draw K + 2 samples S1, . . . , SK+1, SK+2 from a selected data set.
@@ -95,7 +101,7 @@ for (ii in 1:T2_alphas) {
 		unk=numUnk)
 	if (!is.na(given_alpha)) alpha_true <- given_alpha
 
-	saveRDS(alpha_true, sprintf('saved/alphas/%d.rds', ii))
+	saveRDS(alpha_true, sprintf('%s/saved/alphas/%d.rds', root, ii))
 
 	# (b) Set the sink sample abundances to m*S per taxa
 	sink <- t(sources) %*% alpha_true
@@ -128,7 +134,7 @@ for (ii in 1:T2_alphas) {
 	main_test_hist <- results$qhist
 	# main_collected_results <- append(collected_results, list(results))
 
-	pltfile <- sprintf('plots/unk/%d.jpg', ii)
+	pltfile <- sprintf('%s/plots/unk/%d.jpg', root, ii)
 	if (compare_test) {
 		inds <- c()
 		diff <- length(compare_test_hist) - length(main_test_hist)
@@ -163,6 +169,7 @@ for (ii in 1:T2_alphas) {
 	}
 
 }
+
 
 exit(0)
 
